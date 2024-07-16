@@ -28,17 +28,47 @@ fn is_prime(num: u64) -> bool {
     true
 }
 
+fn is_semiprime_with_list_hashset(num: u64, primes: &[u64], primes2: &std::collections::HashSet<u64>) -> bool {
+    if num % 1000000 == 0 { log::debug!("is_semiprime {num}"); }
+    if num % 4 == 0 { return num == 4; }
+    if num % 9 == 0 { return num == 9; }
+    if num % 25 == 0 { return num == 25; }
+    for i in primes {
+        if &num % i == 0 {
+            return is_prime_with_hashset(num / i, primes2);
+        }
+    }
+    true
+}
+
+fn problem187() -> usize {
+  let primes = primes_up_to(11000);
+  let primes2: std::collections::HashSet<u64> = primes.clone().into_iter().collect();
+  (2..100000000).filter(|n| is_semiprime_with_list_hashset(*n, &primes, &primes2)).count()
+}
+
 fn is_prime_with_list(num: u64, primes: &[u64]) -> bool {
     for i in primes {
-        if i * i > num {
+        if num % i == 0 {
+            return &num == i;
+        }
+    }
+    true
+}
+
+fn is_prime_with_hashset(num: u64, primes: &std::collections::HashSet<u64>) -> bool {
+    for i in [2,3,5,7,11,13,17,19,23,29,31,37,41,43] {
+        if num == i {
             return true;
         }
         if num % i == 0 {
             return false;
         }
     }
-    true
+    primes.contains(&num)
 }
+
+
 fn factorize_with_list(num2: u64, primes: &[u64]) -> Vec<u64> {
     let mut vec = Vec::new();
     let mut num = num2;
@@ -55,7 +85,8 @@ fn factorize_with_list(num2: u64, primes: &[u64]) -> Vec<u64> {
 }
 
 fn euler_totient(num: u64, primes: &[u64]) -> u64 {
-  
+  if num % 10000 == 0 
+    { log::debug!("totient: {}", num); }
   let mut factors = factorize_with_list(num, primes);
   factors.dedup();
   let mut count = num;
@@ -124,9 +155,40 @@ fn problem50() -> u64 {
 }
 
 fn problem72() -> u64 {
-  let primes = primes_up_to(50003);
-  (2..50000).map(|n| euler_totient(n, &primes)).sum()
+  let primes = primes_up_to(1000003);
+  (2..1000001).map(|n| euler_totient(n, &primes)).sum()
 }
+
+fn problem69() -> u64 {
+  let primes = primes_up_to(1000003);
+  let Some((n,k)) = (2..1000001).map(|n| (n, euler_totient(n, &primes)))
+                                .max_by(|(n,k), (m,p)| (n * p).cmp(&(m * k)))
+    else { panic!("how") };
+  n
+}
+
+fn problem216() -> u64 {
+  let primes = primes_up_to((17 * 10000)/10);
+  0
+}
+
+fn pow_mod(base: u64, exponent: u64, m: u64) -> u64 {
+    let e = exponent % m;
+    let b = base % m;
+    if b == 1 || e == 0 { return 1; }
+    if b == 0 {return 0;}
+    if e % 2 == 0 {
+        pow_mod((base * base) % m, exponent/2, m)
+    } else {
+        (pow_mod((base * base) % m, exponent/2, m) * base) % m
+    }
+}
+
+fn hyper_mod(base: u64, exponent: u64, m: u64) -> u64 {
+  if(exponent == 1) { return base % m; }
+  pow_mod(base, hyper_mod(base, exponent - 1, m),m)
+}
+
 
 fn problem33() -> u64 {
     let mut res_i: u64 = 1;
@@ -169,9 +231,13 @@ fn main() {
     println!("27: {}", problem27());
     println!("33: {}", problem33());
     println!("45: {}", problem45());
-    let now = Instant::now();
-    println!("72: {}", problem72());
-    let elapsed = now.elapsed();
-    println!("Elapsed: {:.2?}", elapsed);
+    //println!("69: {}", problem69());
+    //println!("13 ** 67 mod 123: {}", pow_mod(13,67,123))
+  //  let now = Instant::now();
+  //  println!("72: {}", problem72());
+  //  let elapsed = now.elapsed();
+    println!("187: {}", problem187());
+    println!("188: {}", hyper_mod(1777, 1855, 100000000));
+  //  println!("Elapsed: {:.2?}", elapsed);
     //  println!("50: {}",problem50());
 }
